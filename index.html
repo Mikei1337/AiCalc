@@ -293,7 +293,7 @@
 </head>
 <body>
     <div class="calculator">
-        <div class="calc-title">📊 Калькулятор Windows</div>
+        <div class="calc-title">📊 Калькулятор Windows (64-bit)</div>
 
         <!-- Сообщение об ошибке -->
         <div class="error-message" id="errorMessage"></div>
@@ -341,10 +341,10 @@
             <button class="num-btn" data-num="1">1</button>
             <button class="num-btn" data-num="2">2</button>
             <button class="num-btn" data-num="3">3</button>
-            <!-- ряд 4: 0, смена знака и пустая/дополнительная кнопка (по необходимости) -->
+            <!-- ряд 4: 0, смена знака и пустая/дополнительная кнопка -->
             <button class="num-btn zero-btn" data-num="0">0</button>
             <button class="num-btn sign-btn" id="btnSign">±</button>
-            <!-- Пустая кнопка для сохранения сетки 3x4 (или можно добавить десятичную точку, но по условию не требуется) -->
+            <!-- Пустая кнопка для сохранения сетки 3x4 -->
             <button class="num-btn" id="btnEmpty" style="visibility: hidden;"></button>
         </div>
     </div>
@@ -366,9 +366,12 @@
             let activeInput = input1;
             // Текущая операция
             let currentOperation = '+';
-            // Диапазон значений
-            const MIN_VALUE = -1000000000;
-            const MAX_VALUE = 10000000000;
+            
+            // Диапазон значений для 64-битной системы
+            // Максимальное значение для знакового 64-битного целого: 9,223,372,036,854,775,807
+            // Минимальное значение для знакового 64-битного целого: -9,223,372,036,854,775,808
+            const MIN_VALUE = -9223372036854775808;
+            const MAX_VALUE = 9223372036854775807;
 
             // --- Вспомогательные функции ---
             function showError(message) {
@@ -389,7 +392,8 @@
 
             function isInRange(value) {
                 const num = parseFloat(value);
-                return !isNaN(num) && num >= MIN_VALUE && num <= MAX_VALUE;
+                // Проверяем, что число не NaN и находится в пределах 64-битного диапазона
+                return !isNaN(num) && isFinite(num) && num >= MIN_VALUE && num <= MAX_VALUE;
             }
 
             // Установка активного поля ввода (только визуально)
@@ -418,12 +422,26 @@
                     hideError();
                     return;
                 }
+                
                 const newValue = current + digit;
-                const num = parseFloat(newValue);
-                if (!isNaN(num) && (num < MIN_VALUE || num > MAX_VALUE)) {
-                    showError(`⚠️ Число вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
+                
+                // Проверяем длину строки (чтобы не превысить разумные пределы)
+                if (newValue.replace('-', '').length > 19) {
+                    showError(`⚠️ Слишком много цифр (максимум 19 знаков)`);
                     return;
                 }
+                
+                const num = parseFloat(newValue);
+                if (isNaN(num) || !isFinite(num)) {
+                    showError(`⚠️ Некорректное число`);
+                    return;
+                }
+                
+                if (num < MIN_VALUE || num > MAX_VALUE) {
+                    showError(`⚠️ Число вне 64-битного диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
+                    return;
+                }
+                
                 activeInput.value = newValue;
                 hideError();
             }
@@ -453,16 +471,21 @@
             function toggleSign() {
                 let val = activeInput.value;
                 if (val === '' || val === '0') return;
+                
+                let newVal;
                 if (val.startsWith('-')) {
-                    activeInput.value = val.substring(1);
+                    newVal = val.substring(1);
                 } else {
-                    const newVal = '-' + val;
-                    if (parseFloat(newVal) < MIN_VALUE) {
-                        showError(`⚠️ Минимальное значение: ${MIN_VALUE.toLocaleString()}`);
-                        return;
-                    }
-                    activeInput.value = newVal;
+                    newVal = '-' + val;
                 }
+                
+                const num = parseFloat(newVal);
+                if (isNaN(num) || !isFinite(num) || num < MIN_VALUE || num > MAX_VALUE) {
+                    showError(`⚠️ Число вне 64-битного диапазона после смены знака`);
+                    return;
+                }
+                
+                activeInput.value = newVal;
                 hideError();
             }
 
@@ -470,14 +493,16 @@
             function calculate() {
                 const v1 = parseFloat(input1.value) || 0;
                 const v2 = parseFloat(input2.value) || 0;
+                
                 if (!isInRange(v1)) {
-                    showError(`Число 1 вне диапазона`);
+                    showError(`Число 1 вне 64-битного диапазона`);
                     return;
                 }
                 if (!isInRange(v2)) {
-                    showError(`Число 2 вне диапазона`);
+                    showError(`Число 2 вне 64-битного диапазона`);
                     return;
                 }
+                
                 let result;
                 switch (currentOperation) {
                     case '+':
@@ -500,12 +525,24 @@
                     default:
                         result = 0;
                 }
-                if (result < MIN_VALUE || result > MAX_VALUE) {
-                    showError('Результат вне допустимого диапазона');
+                
+                // Проверяем результат на соответствие 64-битному диапазону
+                if (!isFinite(result) || result < MIN_VALUE || result > MAX_VALUE) {
+                    showError('Результат вне 64-битного диапазона');
                     resultField.textContent = 'Переполнение';
                     return;
                 }
-                resultField.textContent = Number.isInteger(result) ? result.toString() : parseFloat(result.toFixed(6)).toString();
+                
+                // Форматируем результат
+                if (Number.isInteger(result) && Math.abs(result) <= MAX_VALUE) {
+                    resultField.textContent = result.toString();
+                } else if (Math.abs(result) <= MAX_VALUE) {
+                    // Для чисел с плавающей точкой показываем до 10 знаков после запятой
+                    resultField.textContent = parseFloat(result.toFixed(10)).toString();
+                } else {
+                    resultField.textContent = 'Переполнение';
+                }
+                
                 hideError();
             }
 
@@ -575,6 +612,9 @@
 
             // Инициализация
             clearAll();
+            
+            console.log('✅ Калькулятор Windows 64-bit готов');
+            console.log('Диапазон: от', MIN_VALUE.toLocaleString(), 'до', MAX_VALUE.toLocaleString());
         })();
     </script>
 </body>
