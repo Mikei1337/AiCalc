@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор Windows</title>
     <style>
-        /* Сброс стилей */
         * {
             margin: 0;
             padding: 0;
@@ -22,7 +21,6 @@
             padding: 20px;
         }
 
-        /* Контейнер калькулятора в стиле Windows */
         .calculator {
             background: #f3f3f3;
             border: 1px solid #ccc;
@@ -35,7 +33,6 @@
             gap: 12px;
         }
 
-        /* Заголовок окна (имитация) */
         .calc-title {
             font-size: 13px;
             color: #333;
@@ -46,7 +43,6 @@
             letter-spacing: 0.3px;
         }
 
-        /* Блок ввода чисел */
         .input-group {
             display: flex;
             align-items: center;
@@ -68,16 +64,21 @@
             background: white;
             color: #333;
             outline: none;
-            transition: border-color 0.15s;
-            /* Запрещаем ввод с клавиатуры */
-            pointer-events: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
             caret-color: transparent;
             user-select: none;
+            cursor: pointer;
         }
 
         .input-field:focus {
             border-color: #0078d4;
             box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+        }
+
+        .input-field.active-input {
+            border-color: #0078d4;
+            box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.2);
+            background: #f5f9ff;
         }
 
         .input-field.error {
@@ -86,12 +87,18 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
         }
 
-        /* Операторы */
         .operators {
             display: flex;
             gap: 6px;
@@ -134,7 +141,6 @@
             box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
         }
 
-        /* Поле результата */
         .result-field {
             background: #fff;
             border: 1px solid #0078d4;
@@ -152,11 +158,60 @@
             word-break: break-all;
         }
 
-        /* Цифровая клавиатура */
+        /* Кнопки управления: стереть 1 число и очистить всё */
+        .control-buttons {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .control-btn {
+            flex: 1;
+            height: 42px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        .backspace-one-btn {
+            background: #e8e8e8;
+            color: #333;
+        }
+        .backspace-one-btn:hover {
+            background: #d4d4d4;
+        }
+        .backspace-one-btn:active {
+            background: #c0c0c0;
+            transform: scale(0.97);
+        }
+
+        .clear-all-btn {
+            background: #e81123;
+            color: white;
+            border-color: #d40000;
+            font-weight: 600;
+        }
+        .clear-all-btn:hover {
+            background: #d40000;
+        }
+        .clear-all-btn:active {
+            background: #b00000;
+            transform: scale(0.97);
+        }
+
+        /* Цифровая клавиатура: стандартные 3 ряда по 3 кнопки */
         .numpad {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
             margin-top: 4px;
         }
 
@@ -181,39 +236,24 @@
             background: #e1e1e1;
             border-color: #bbb;
         }
-
         .num-btn:active {
             background: #d0d0d0;
             transform: scale(0.95);
         }
 
-        /* Кнопка смены знака */
+        /* Кнопка 0 и десятичная точка (если нужна) */
+        .zero-btn {
+            /* стандартный стиль, при необходимости растянуть */
+        }
+
         .sign-btn {
             background: #e8e8e8;
             font-weight: 700;
         }
-
-        /* Кнопка очистки */
-        .clear-btn {
-            background: #e81123;
-            color: white;
-            border-color: #d40000;
-            font-weight: 600;
-            grid-column: span 2;
+        .sign-btn:hover {
+            background: #d4d4d4;
         }
 
-        .clear-btn:hover {
-            background: #d40000;
-        }
-
-        /* Кнопка Backspace */
-        .backspace-btn {
-            background: #e8e8e8;
-            font-weight: 600;
-            grid-column: span 2;
-        }
-
-        /* Сообщение об ошибке */
         .error-message {
             color: #e81123;
             font-size: 13px;
@@ -226,41 +266,33 @@
             border: 1px solid #ffd0d0;
             display: none;
         }
-
         .error-message.show {
             display: block;
         }
 
-        /* Активное поле ввода */
-        .input-field.active-input {
-            border-color: #0078d4;
-            box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
-            background: #f5f9ff;
-        }
-
-        /* Адаптивность */
         @media (max-width: 420px) {
             .calculator {
                 width: 100%;
                 padding: 12px;
             }
-            
             .op-btn {
                 width: 45px;
                 height: 45px;
                 font-size: 18px;
             }
-            
             .num-btn {
                 height: 45px;
                 font-size: 16px;
+            }
+            .control-btn {
+                height: 40px;
+                font-size: 13px;
             }
         }
     </style>
 </head>
 <body>
     <div class="calculator">
-        <!-- Заголовок в стиле Windows -->
         <div class="calc-title">📊 Калькулятор Windows</div>
 
         <!-- Сообщение об ошибке -->
@@ -268,15 +300,8 @@
 
         <!-- Поле ввода первого числа -->
         <div class="input-group">
-            <label style="font-weight: 600; color: #555; min-width: 50px;">Число 1:</label>
-            <input 
-                type="text" 
-                class="input-field active-input" 
-                id="input1" 
-                placeholder="0" 
-                readonly
-                data-active="true"
-            >
+            <label style="font-weight: 600; color: #555; min-width: 55px;">Число 1:</label>
+            <input type="text" class="input-field active-input" id="input1" placeholder="0" readonly>
         </div>
 
         <!-- Кнопки операций -->
@@ -289,178 +314,132 @@
 
         <!-- Поле ввода второго числа -->
         <div class="input-group">
-            <label style="font-weight: 600; color: #555; min-width: 50px;">Число 2:</label>
-            <input 
-                type="text" 
-                class="input-field" 
-                id="input2" 
-                placeholder="0" 
-                readonly
-                data-active="false"
-            >
+            <label style="font-weight: 600; color: #555; min-width: 55px;">Число 2:</label>
+            <input type="text" class="input-field" id="input2" placeholder="0" readonly>
         </div>
 
         <!-- Поле результата -->
-        <div class="result-field" id="resultField">
-            Результат
+        <div class="result-field" id="resultField">Результат</div>
+
+        <!-- Кнопки управления: стереть одно число / очистить всё -->
+        <div class="control-buttons">
+            <button class="control-btn backspace-one-btn" id="btnBackspaceOne">⌫ Стереть число</button>
+            <button class="control-btn clear-all-btn" id="btnClearAll">C Очистить всё</button>
         </div>
 
-        <!-- Цифровая клавиатура -->
+        <!-- Цифровая клавиатура (3 ряда по 3 кнопки) -->
         <div class="numpad">
+            <!-- ряд 1 -->
             <button class="num-btn" data-num="7">7</button>
             <button class="num-btn" data-num="8">8</button>
             <button class="num-btn" data-num="9">9</button>
-            <button class="num-btn sign-btn" id="btnSign">±</button>
-            <button class="num-btn clear-btn" id="btnClear">C</button>
-            
+            <!-- ряд 2 -->
             <button class="num-btn" data-num="4">4</button>
             <button class="num-btn" data-num="5">5</button>
             <button class="num-btn" data-num="6">6</button>
-            <button class="num-btn backspace-btn" id="btnBackspace">⌫</button>
-            
+            <!-- ряд 3 -->
             <button class="num-btn" data-num="1">1</button>
             <button class="num-btn" data-num="2">2</button>
             <button class="num-btn" data-num="3">3</button>
-            <button class="num-btn" data-num="0" style="grid-column: span 2;">0</button>
+            <!-- ряд 4: 0, смена знака и пустая/дополнительная кнопка (по необходимости) -->
+            <button class="num-btn zero-btn" data-num="0">0</button>
+            <button class="num-btn sign-btn" id="btnSign">±</button>
+            <!-- Пустая кнопка для сохранения сетки 3x4 (или можно добавить десятичную точку, но по условию не требуется) -->
+            <button class="num-btn" id="btnEmpty" style="visibility: hidden;"></button>
         </div>
     </div>
 
     <script>
         (function() {
-            // Получаем элементы DOM
+            // Элементы DOM
             const input1 = document.getElementById('input1');
             const input2 = document.getElementById('input2');
             const resultField = document.getElementById('resultField');
             const errorMessage = document.getElementById('errorMessage');
             const numButtons = document.querySelectorAll('.num-btn[data-num]');
             const btnSign = document.getElementById('btnSign');
-            const btnClear = document.getElementById('btnClear');
-            const btnBackspace = document.getElementById('btnBackspace');
+            const btnClearAll = document.getElementById('btnClearAll');
+            const btnBackspaceOne = document.getElementById('btnBackspaceOne');
             const opButtons = document.querySelectorAll('.op-btn');
-            
-            // Активное поле ввода
+
+            // Активное поле ввода (изначально input1)
             let activeInput = input1;
-            
-            // Выбранная операция
+            // Текущая операция
             let currentOperation = '+';
-            
-            // Диапазон допустимых значений
+            // Диапазон значений
             const MIN_VALUE = -1000000000;
             const MAX_VALUE = 10000000000;
-            
-            // Функция показа ошибки
+
+            // --- Вспомогательные функции ---
             function showError(message) {
                 errorMessage.textContent = message;
                 errorMessage.classList.add('show');
-                
-                // Подсветка активного поля красным
                 activeInput.classList.add('error');
-                
-                // Скрываем ошибку через 3 секунды
                 setTimeout(() => {
                     errorMessage.classList.remove('show');
                     activeInput.classList.remove('error');
                 }, 3000);
             }
-            
-            // Функция скрытия ошибки
+
             function hideError() {
                 errorMessage.classList.remove('show');
                 input1.classList.remove('error');
                 input2.classList.remove('error');
             }
-            
-            // Проверка диапазона числа
+
             function isInRange(value) {
                 const num = parseFloat(value);
                 return !isNaN(num) && num >= MIN_VALUE && num <= MAX_VALUE;
             }
-            
-            // Обновление значения активного поля
-            function updateActiveInput(value) {
-                if (value === '' || value === '-') {
-                    activeInput.value = value;
-                    hideError();
-                    return;
-                }
-                
-                const num = parseFloat(value);
-                
-                // Проверяем диапазон
-                if (!isInRange(value)) {
-                    showError(`⚠️ Ошибка: число должно быть от ${MIN_VALUE.toLocaleString()} до ${MAX_VALUE.toLocaleString()}`);
-                    // Не обновляем значение
-                    return false;
-                }
-                
-                activeInput.value = value;
-                hideError();
-                return true;
+
+            // Установка активного поля ввода (только визуально)
+            function setActiveInput(inputElement) {
+                activeInput = inputElement;
+                input1.classList.remove('active-input');
+                input2.classList.remove('active-input');
+                inputElement.classList.add('active-input');
             }
-            
-            // Добавление цифры к активному полю
+
+            // Установка активной операции
+            function setActiveOperation(op) {
+                currentOperation = op;
+                opButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.op === op) btn.classList.add('active');
+                });
+            }
+
+            // Добавление цифры в активное поле
             function appendDigit(digit) {
-                let currentValue = activeInput.value;
-                
-                // Если текущее значение "0" или пустое, заменяем
-                if (currentValue === '0' || currentValue === '') {
+                let current = activeInput.value;
+                // Если поле равно "0" или пустое – заменяем
+                if (current === '0' || current === '') {
                     activeInput.value = digit;
                     hideError();
                     return;
                 }
-                
-                // Проверяем, не превысит ли новое значение лимит
-                const newValue = currentValue + digit;
+                const newValue = current + digit;
                 const num = parseFloat(newValue);
-                
                 if (!isNaN(num) && (num < MIN_VALUE || num > MAX_VALUE)) {
-                    showError(`⚠️ Ошибка: число должно быть от ${MIN_VALUE.toLocaleString()} до ${MAX_VALUE.toLocaleString()}`);
+                    showError(`⚠️ Число вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
                     return;
                 }
-                
                 activeInput.value = newValue;
                 hideError();
             }
-            
-            // Смена знака числа
-            function toggleSign() {
-                let currentValue = activeInput.value;
-                
-                if (currentValue === '' || currentValue === '0') {
-                    return;
-                }
-                
-                if (currentValue.startsWith('-')) {
-                    activeInput.value = currentValue.substring(1);
-                } else {
-                    const newValue = '-' + currentValue;
-                    const num = parseFloat(newValue);
-                    
-                    if (num < MIN_VALUE) {
-                        showError(`⚠️ Ошибка: минимальное значение ${MIN_VALUE.toLocaleString()}`);
-                        return;
-                    }
-                    
-                    activeInput.value = newValue;
-                }
-                
-                hideError();
-            }
-            
-            // Удаление последнего символа
-            function backspace() {
-                let currentValue = activeInput.value;
-                
-                if (currentValue.length <= 1) {
+
+            // Стереть один символ (backspace) в активном поле
+            function backspaceOne() {
+                let val = activeInput.value;
+                if (val.length <= 1 || val === '0' || val === '') {
                     activeInput.value = '0';
                 } else {
-                    activeInput.value = currentValue.slice(0, -1);
+                    activeInput.value = val.slice(0, -1);
                 }
-                
                 hideError();
             }
-            
-            // Очистка всех полей
+
+            // Полная очистка
             function clearAll() {
                 input1.value = '0';
                 input2.value = '0';
@@ -469,192 +448,133 @@
                 setActiveInput(input1);
                 setActiveOperation('+');
             }
-            
-            // Установка активного поля ввода
-            function setActiveInput(input) {
-                activeInput = input;
-                
-                // Обновляем визуальное выделение
-                input1.classList.remove('active-input');
-                input2.classList.remove('active-input');
-                
-                input.classList.add('active-input');
-                input.dataset.active = 'true';
-                
-                // Обновляем второе поле
-                if (input === input1) {
-                    input2.dataset.active = 'false';
+
+            // Смена знака в активном поле
+            function toggleSign() {
+                let val = activeInput.value;
+                if (val === '' || val === '0') return;
+                if (val.startsWith('-')) {
+                    activeInput.value = val.substring(1);
                 } else {
-                    input1.dataset.active = 'false';
-                }
-            }
-            
-            // Установка активной операции
-            function setActiveOperation(op) {
-                currentOperation = op;
-                
-                // Обновляем визуальное выделение кнопок
-                opButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.op === op) {
-                        btn.classList.add('active');
+                    const newVal = '-' + val;
+                    if (parseFloat(newVal) < MIN_VALUE) {
+                        showError(`⚠️ Минимальное значение: ${MIN_VALUE.toLocaleString()}`);
+                        return;
                     }
-                });
+                    activeInput.value = newVal;
+                }
+                hideError();
             }
-            
-            // Выполнение вычисления
+
+            // Выполнение расчёта
             function calculate() {
-                const value1 = parseFloat(input1.value) || 0;
-                const value2 = parseFloat(input2.value) || 0;
+                const v1 = parseFloat(input1.value) || 0;
+                const v2 = parseFloat(input2.value) || 0;
+                if (!isInRange(v1)) {
+                    showError(`Число 1 вне диапазона`);
+                    return;
+                }
+                if (!isInRange(v2)) {
+                    showError(`Число 2 вне диапазона`);
+                    return;
+                }
                 let result;
-                
-                // Проверка диапазона входных значений
-                if (!isInRange(value1)) {
-                    showError(`⚠️ Число 1 вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
-                    return;
-                }
-                
-                if (!isInRange(value2)) {
-                    showError(`⚠️ Число 2 вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
-                    return;
-                }
-                
-                // Выполнение операции
-                switch(currentOperation) {
+                switch (currentOperation) {
                     case '+':
-                        result = value1 + value2;
+                        result = v1 + v2;
                         break;
                     case '-':
-                        result = value1 - value2;
+                        result = v1 - v2;
                         break;
                     case '*':
-                        result = value1 * value2;
+                        result = v1 * v2;
                         break;
                     case '/':
-                        if (value2 === 0) {
-                            showError('⚠️ Ошибка: деление на ноль!');
+                        if (v2 === 0) {
+                            showError('Деление на ноль');
                             resultField.textContent = 'Ошибка';
                             return;
                         }
-                        result = value1 / value2;
+                        result = v1 / v2;
                         break;
                     default:
                         result = 0;
                 }
-                
-                // Проверка результата на выход за диапазон
                 if (result < MIN_VALUE || result > MAX_VALUE) {
-                    showError(`⚠️ Результат (${result}) вне допустимого диапазона!`);
+                    showError('Результат вне допустимого диапазона');
                     resultField.textContent = 'Переполнение';
                     return;
                 }
-                
-                // Форматирование результата
-                if (Number.isInteger(result)) {
-                    resultField.textContent = result.toString();
-                } else {
-                    // Округляем до 6 знаков после запятой
-                    resultField.textContent = parseFloat(result.toFixed(6)).toString();
-                }
-                
+                resultField.textContent = Number.isInteger(result) ? result.toString() : parseFloat(result.toFixed(6)).toString();
                 hideError();
             }
-            
-            // Обработчики событий для цифровых кнопок
-            numButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const digit = button.dataset.num;
-                    appendDigit(digit);
-                });
+
+            // --- Обработчики событий ---
+            // Цифровые кнопки
+            numButtons.forEach(btn => {
+                btn.addEventListener('click', () => appendDigit(btn.dataset.num));
             });
-            
-            // Обработчик кнопки смены знака
+
+            // Кнопка смены знака
             btnSign.addEventListener('click', toggleSign);
-            
-            // Обработчик кнопки очистки
-            btnClear.addEventListener('click', clearAll);
-            
-            // Обработчик кнопки backspace
-            btnBackspace.addEventListener('click', backspace);
-            
-            // Обработчики для кнопок операций
-            opButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const op = button.dataset.op;
-                    setActiveOperation(op);
-                    calculate(); // Автоматически вычисляем при смене операции
+
+            // Кнопка очистить всё
+            btnClearAll.addEventListener('click', clearAll);
+
+            // Кнопка стереть одно число (backspace)
+            btnBackspaceOne.addEventListener('click', backspaceOne);
+
+            // Кнопки операций
+            opButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setActiveOperation(btn.dataset.op);
+                    calculate();
                 });
             });
-            
-            // Переключение активного поля при клике
-            input1.addEventListener('click', () => {
-                setActiveInput(input1);
-            });
-            
-            input2.addEventListener('click', () => {
-                setActiveInput(input2);
-            });
-            
-            // Поддержка клавиатуры (только цифры и базовые клавиши)
+
+            // Клик по полям ввода – переключение активного поля (ввод данных всё равно через клавиатуру)
+            input1.addEventListener('click', () => setActiveInput(input1));
+            input2.addEventListener('click', () => setActiveInput(input2));
+
+            // Поддержка физической клавиатуры (только цифры и базовые клавиши)
             document.addEventListener('keydown', (e) => {
-                // Цифры
                 if (e.key >= '0' && e.key <= '9') {
                     e.preventDefault();
                     appendDigit(e.key);
-                }
-                // Backspace
-                else if (e.key === 'Backspace') {
+                } else if (e.key === 'Backspace') {
                     e.preventDefault();
-                    backspace();
-                }
-                // Delete (очистка)
-                else if (e.key === 'Delete') {
+                    backspaceOne();
+                } else if (e.key === 'Delete') {
                     e.preventDefault();
                     clearAll();
-                }
-                // Enter (вычисление)
-                else if (e.key === 'Enter') {
+                } else if (e.key === 'Enter') {
                     e.preventDefault();
                     calculate();
-                }
-                // Операторы
-                else if (e.key === '+') {
+                } else if (e.key === '+') {
                     e.preventDefault();
                     setActiveOperation('+');
                     calculate();
-                }
-                else if (e.key === '-') {
+                } else if (e.key === '-') {
                     e.preventDefault();
                     setActiveOperation('-');
                     calculate();
-                }
-                else if (e.key === '*') {
+                } else if (e.key === '*') {
                     e.preventDefault();
                     setActiveOperation('*');
                     calculate();
-                }
-                else if (e.key === '/') {
+                } else if (e.key === '/') {
                     e.preventDefault();
                     setActiveOperation('/');
                     calculate();
-                }
-                // Tab для переключения между полями
-                else if (e.key === 'Tab') {
+                } else if (e.key === 'Tab') {
                     e.preventDefault();
-                    if (activeInput === input1) {
-                        setActiveInput(input2);
-                    } else {
-                        setActiveInput(input1);
-                    }
+                    if (activeInput === input1) setActiveInput(input2);
+                    else setActiveInput(input1);
                 }
             });
-            
+
             // Инициализация
             clearAll();
-            
-            console.log('✅ Калькулятор Windows готов к работе');
-            console.log('Диапазон чисел:', MIN_VALUE.toLocaleString(), 'до', MAX_VALUE.toLocaleString());
-            console.log('Управление: цифровая клавиатура + клавиши клавиатуры');
         })();
     </script>
 </body>
