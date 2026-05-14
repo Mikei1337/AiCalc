@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Windows</title>
+    <style>
+        /* Сброс стилей */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Контейнер калькулятора в стиле Windows */
+        .calculator {
+            background: #f3f3f3;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 380px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Заголовок окна (имитация) */
+        .calc-title {
+            font-size: 13px;
+            color: #333;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Блок ввода чисел */
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            text-align: right;
+            background: white;
+            color: #333;
+            outline: none;
+            transition: border-color 0.15s;
+            /* Запрещаем ввод с клавиатуры */
+            pointer-events: none;
+            caret-color: transparent;
+            user-select: none;
+        }
+
+        .input-field:focus {
+            border-color: #0078d4;
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+        }
+
+        .input-field.error {
+            border-color: #e81123;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Операторы */
+        .operators {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 4px 0;
+        }
+
+        .op-btn {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: #e1e1e1;
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .op-btn:hover {
+            background: #d4d4d4;
+            border-color: #bbb;
+        }
+
+        .op-btn:active {
+            background: #c8c8c8;
+            border-color: #999;
+            transform: scale(0.97);
+        }
+
+        .op-btn.active {
+            background: #0078d4;
+            color: white;
+            border-color: #005a9e;
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+        }
+
+        /* Поле результата */
+        .result-field {
+            background: #fff;
+            border: 1px solid #0078d4;
+            border-radius: 3px;
+            padding: 12px;
+            font-size: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            text-align: right;
+            color: #0078d4;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            word-break: break-all;
+        }
+
+        /* Цифровая клавиатура */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .num-btn {
+            height: 52px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: #f9f9f9;
+            color: #333;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        .num-btn:hover {
+            background: #e1e1e1;
+            border-color: #bbb;
+        }
+
+        .num-btn:active {
+            background: #d0d0d0;
+            transform: scale(0.95);
+        }
+
+        /* Кнопка смены знака */
+        .sign-btn {
+            background: #e8e8e8;
+            font-weight: 700;
+        }
+
+        /* Кнопка очистки */
+        .clear-btn {
+            background: #e81123;
+            color: white;
+            border-color: #d40000;
+            font-weight: 600;
+            grid-column: span 2;
+        }
+
+        .clear-btn:hover {
+            background: #d40000;
+        }
+
+        /* Кнопка Backspace */
+        .backspace-btn {
+            background: #e8e8e8;
+            font-weight: 600;
+            grid-column: span 2;
+        }
+
+        /* Сообщение об ошибке */
+        .error-message {
+            color: #e81123;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            min-height: 20px;
+            padding: 4px;
+            background: #fff0f0;
+            border-radius: 3px;
+            border: 1px solid #ffd0d0;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Активное поле ввода */
+        .input-field.active-input {
+            border-color: #0078d4;
+            box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
+            background: #f5f9ff;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 420px) {
+            .calculator {
+                width: 100%;
+                padding: 12px;
+            }
+            
+            .op-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+            
+            .num-btn {
+                height: 45px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <!-- Заголовок в стиле Windows -->
+        <div class="calc-title">📊 Калькулятор Windows</div>
+
+        <!-- Сообщение об ошибке -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Поле ввода первого числа -->
+        <div class="input-group">
+            <label style="font-weight: 600; color: #555; min-width: 50px;">Число 1:</label>
+            <input 
+                type="text" 
+                class="input-field active-input" 
+                id="input1" 
+                placeholder="0" 
+                readonly
+                data-active="true"
+            >
+        </div>
+
+        <!-- Кнопки операций -->
+        <div class="operators">
+            <button class="op-btn active" id="btnAdd" data-op="+">+</button>
+            <button class="op-btn" id="btnSub" data-op="-">−</button>
+            <button class="op-btn" id="btnMul" data-op="*">×</button>
+            <button class="op-btn" id="btnDiv" data-op="/">÷</button>
+        </div>
+
+        <!-- Поле ввода второго числа -->
+        <div class="input-group">
+            <label style="font-weight: 600; color: #555; min-width: 50px;">Число 2:</label>
+            <input 
+                type="text" 
+                class="input-field" 
+                id="input2" 
+                placeholder="0" 
+                readonly
+                data-active="false"
+            >
+        </div>
+
+        <!-- Поле результата -->
+        <div class="result-field" id="resultField">
+            Результат
+        </div>
+
+        <!-- Цифровая клавиатура -->
+        <div class="numpad">
+            <button class="num-btn" data-num="7">7</button>
+            <button class="num-btn" data-num="8">8</button>
+            <button class="num-btn" data-num="9">9</button>
+            <button class="num-btn sign-btn" id="btnSign">±</button>
+            <button class="num-btn clear-btn" id="btnClear">C</button>
+            
+            <button class="num-btn" data-num="4">4</button>
+            <button class="num-btn" data-num="5">5</button>
+            <button class="num-btn" data-num="6">6</button>
+            <button class="num-btn backspace-btn" id="btnBackspace">⌫</button>
+            
+            <button class="num-btn" data-num="1">1</button>
+            <button class="num-btn" data-num="2">2</button>
+            <button class="num-btn" data-num="3">3</button>
+            <button class="num-btn" data-num="0" style="grid-column: span 2;">0</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Получаем элементы DOM
+            const input1 = document.getElementById('input1');
+            const input2 = document.getElementById('input2');
+            const resultField = document.getElementById('resultField');
+            const errorMessage = document.getElementById('errorMessage');
+            const numButtons = document.querySelectorAll('.num-btn[data-num]');
+            const btnSign = document.getElementById('btnSign');
+            const btnClear = document.getElementById('btnClear');
+            const btnBackspace = document.getElementById('btnBackspace');
+            const opButtons = document.querySelectorAll('.op-btn');
+            
+            // Активное поле ввода
+            let activeInput = input1;
+            
+            // Выбранная операция
+            let currentOperation = '+';
+            
+            // Диапазон допустимых значений
+            const MIN_VALUE = -1000000000;
+            const MAX_VALUE = 10000000000;
+            
+            // Функция показа ошибки
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                
+                // Подсветка активного поля красным
+                activeInput.classList.add('error');
+                
+                // Скрываем ошибку через 3 секунды
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                    activeInput.classList.remove('error');
+                }, 3000);
+            }
+            
+            // Функция скрытия ошибки
+            function hideError() {
+                errorMessage.classList.remove('show');
+                input1.classList.remove('error');
+                input2.classList.remove('error');
+            }
+            
+            // Проверка диапазона числа
+            function isInRange(value) {
+                const num = parseFloat(value);
+                return !isNaN(num) && num >= MIN_VALUE && num <= MAX_VALUE;
+            }
+            
+            // Обновление значения активного поля
+            function updateActiveInput(value) {
+                if (value === '' || value === '-') {
+                    activeInput.value = value;
+                    hideError();
+                    return;
+                }
+                
+                const num = parseFloat(value);
+                
+                // Проверяем диапазон
+                if (!isInRange(value)) {
+                    showError(`⚠️ Ошибка: число должно быть от ${MIN_VALUE.toLocaleString()} до ${MAX_VALUE.toLocaleString()}`);
+                    // Не обновляем значение
+                    return false;
+                }
+                
+                activeInput.value = value;
+                hideError();
+                return true;
+            }
+            
+            // Добавление цифры к активному полю
+            function appendDigit(digit) {
+                let currentValue = activeInput.value;
+                
+                // Если текущее значение "0" или пустое, заменяем
+                if (currentValue === '0' || currentValue === '') {
+                    activeInput.value = digit;
+                    hideError();
+                    return;
+                }
+                
+                // Проверяем, не превысит ли новое значение лимит
+                const newValue = currentValue + digit;
+                const num = parseFloat(newValue);
+                
+                if (!isNaN(num) && (num < MIN_VALUE || num > MAX_VALUE)) {
+                    showError(`⚠️ Ошибка: число должно быть от ${MIN_VALUE.toLocaleString()} до ${MAX_VALUE.toLocaleString()}`);
+                    return;
+                }
+                
+                activeInput.value = newValue;
+                hideError();
+            }
+            
+            // Смена знака числа
+            function toggleSign() {
+                let currentValue = activeInput.value;
+                
+                if (currentValue === '' || currentValue === '0') {
+                    return;
+                }
+                
+                if (currentValue.startsWith('-')) {
+                    activeInput.value = currentValue.substring(1);
+                } else {
+                    const newValue = '-' + currentValue;
+                    const num = parseFloat(newValue);
+                    
+                    if (num < MIN_VALUE) {
+                        showError(`⚠️ Ошибка: минимальное значение ${MIN_VALUE.toLocaleString()}`);
+                        return;
+                    }
+                    
+                    activeInput.value = newValue;
+                }
+                
+                hideError();
+            }
+            
+            // Удаление последнего символа
+            function backspace() {
+                let currentValue = activeInput.value;
+                
+                if (currentValue.length <= 1) {
+                    activeInput.value = '0';
+                } else {
+                    activeInput.value = currentValue.slice(0, -1);
+                }
+                
+                hideError();
+            }
+            
+            // Очистка всех полей
+            function clearAll() {
+                input1.value = '0';
+                input2.value = '0';
+                resultField.textContent = 'Результат';
+                hideError();
+                setActiveInput(input1);
+                setActiveOperation('+');
+            }
+            
+            // Установка активного поля ввода
+            function setActiveInput(input) {
+                activeInput = input;
+                
+                // Обновляем визуальное выделение
+                input1.classList.remove('active-input');
+                input2.classList.remove('active-input');
+                
+                input.classList.add('active-input');
+                input.dataset.active = 'true';
+                
+                // Обновляем второе поле
+                if (input === input1) {
+                    input2.dataset.active = 'false';
+                } else {
+                    input1.dataset.active = 'false';
+                }
+            }
+            
+            // Установка активной операции
+            function setActiveOperation(op) {
+                currentOperation = op;
+                
+                // Обновляем визуальное выделение кнопок
+                opButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.op === op) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            // Выполнение вычисления
+            function calculate() {
+                const value1 = parseFloat(input1.value) || 0;
+                const value2 = parseFloat(input2.value) || 0;
+                let result;
+                
+                // Проверка диапазона входных значений
+                if (!isInRange(value1)) {
+                    showError(`⚠️ Число 1 вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
+                    return;
+                }
+                
+                if (!isInRange(value2)) {
+                    showError(`⚠️ Число 2 вне диапазона [${MIN_VALUE.toLocaleString()}, ${MAX_VALUE.toLocaleString()}]`);
+                    return;
+                }
+                
+                // Выполнение операции
+                switch(currentOperation) {
+                    case '+':
+                        result = value1 + value2;
+                        break;
+                    case '-':
+                        result = value1 - value2;
+                        break;
+                    case '*':
+                        result = value1 * value2;
+                        break;
+                    case '/':
+                        if (value2 === 0) {
+                            showError('⚠️ Ошибка: деление на ноль!');
+                            resultField.textContent = 'Ошибка';
+                            return;
+                        }
+                        result = value1 / value2;
+                        break;
+                    default:
+                        result = 0;
+                }
+                
+                // Проверка результата на выход за диапазон
+                if (result < MIN_VALUE || result > MAX_VALUE) {
+                    showError(`⚠️ Результат (${result}) вне допустимого диапазона!`);
+                    resultField.textContent = 'Переполнение';
+                    return;
+                }
+                
+                // Форматирование результата
+                if (Number.isInteger(result)) {
+                    resultField.textContent = result.toString();
+                } else {
+                    // Округляем до 6 знаков после запятой
+                    resultField.textContent = parseFloat(result.toFixed(6)).toString();
+                }
+                
+                hideError();
+            }
+            
+            // Обработчики событий для цифровых кнопок
+            numButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const digit = button.dataset.num;
+                    appendDigit(digit);
+                });
+            });
+            
+            // Обработчик кнопки смены знака
+            btnSign.addEventListener('click', toggleSign);
+            
+            // Обработчик кнопки очистки
+            btnClear.addEventListener('click', clearAll);
+            
+            // Обработчик кнопки backspace
+            btnBackspace.addEventListener('click', backspace);
+            
+            // Обработчики для кнопок операций
+            opButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const op = button.dataset.op;
+                    setActiveOperation(op);
+                    calculate(); // Автоматически вычисляем при смене операции
+                });
+            });
+            
+            // Переключение активного поля при клике
+            input1.addEventListener('click', () => {
+                setActiveInput(input1);
+            });
+            
+            input2.addEventListener('click', () => {
+                setActiveInput(input2);
+            });
+            
+            // Поддержка клавиатуры (только цифры и базовые клавиши)
+            document.addEventListener('keydown', (e) => {
+                // Цифры
+                if (e.key >= '0' && e.key <= '9') {
+                    e.preventDefault();
+                    appendDigit(e.key);
+                }
+                // Backspace
+                else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    backspace();
+                }
+                // Delete (очистка)
+                else if (e.key === 'Delete') {
+                    e.preventDefault();
+                    clearAll();
+                }
+                // Enter (вычисление)
+                else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    calculate();
+                }
+                // Операторы
+                else if (e.key === '+') {
+                    e.preventDefault();
+                    setActiveOperation('+');
+                    calculate();
+                }
+                else if (e.key === '-') {
+                    e.preventDefault();
+                    setActiveOperation('-');
+                    calculate();
+                }
+                else if (e.key === '*') {
+                    e.preventDefault();
+                    setActiveOperation('*');
+                    calculate();
+                }
+                else if (e.key === '/') {
+                    e.preventDefault();
+                    setActiveOperation('/');
+                    calculate();
+                }
+                // Tab для переключения между полями
+                else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    if (activeInput === input1) {
+                        setActiveInput(input2);
+                    } else {
+                        setActiveInput(input1);
+                    }
+                }
+            });
+            
+            // Инициализация
+            clearAll();
+            
+            console.log('✅ Калькулятор Windows готов к работе');
+            console.log('Диапазон чисел:', MIN_VALUE.toLocaleString(), 'до', MAX_VALUE.toLocaleString());
+            console.log('Управление: цифровая клавиатура + клавиши клавиатуры');
+        })();
+    </script>
+</body>
+</html>
